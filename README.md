@@ -1,4 +1,4 @@
-# COVID-19-Info-Dashboard
+# Data Viz Project - http://sarscoviz.info/about
 
 1. Open project folder in VSCode and open a terminal.
 2. Using "pip install ___", install 'requests' and maybe a few others I am forgetting.
