@@ -1,4 +1,5 @@
 # Data Viz Project - http://sarscoviz.info/about
+# Documentation - https://docs.google.com/document/d/18tSVw6OKgKA-u0gXlQuedB0uH_8QSgea5QybRSeVVsI/edit#
 
 1. Open project folder in VSCode and open a terminal.
 2. Using "pip install ___", install 'requests' and maybe a few others I am forgetting.
