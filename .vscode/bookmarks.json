@@ -1,0 +1,17 @@
+[
+	{
+		"path": "$ROOTPATH$\\application.py",
+		"bookmarks": [
+			{
+				"line": 5,
+				"column": 0,
+				"label": ""
+			},
+			{
+				"line": 73,
+				"column": 0,
+				"label": "app config"
+			}
+		]
+	}
+]
