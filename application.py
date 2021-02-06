@@ -204,7 +204,7 @@ COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-w\
 '''download_url('https://wid.world/exports/WID_Data_Metadata_21012021-003057.zip',\
     './WID/WID1/WID_Data_Metadata_21012021-003057.zip')'''
 
-headers = {
+'''headers = {
     "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate, br",
     "Accept-Language": "en-US,en;q=0.9",
@@ -215,11 +215,11 @@ headers = {
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "none",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36"
-}
+}'''
 Rgnl_IncomeProductEmployment_StateArea = requests.get('https://apps.bea.gov/api\
     /data/?UserID=4ACE1088-72E5-4690-953A-6619CAE411B2&method=GetData&datasetna\
         me=Regional&TableName=CAINC1&LineCode=1&Year=ALL&GeoFips=STATE&Result\
-            Format=json', headers=headers).json()
+            Format=json').json()
 
 print(Rgnl_IncomeProductEmployment_StateArea)
 
