@@ -7,12 +7,28 @@ at https://bit.ly/SarsCoViz_Docn
 - Feedback welcome!
 '''
 
-import copy, requests, csv, datetime
+import copy, requests, csv, datetime, os
 from flask import Flask, render_template, url_for, flash, request, redirect #^1
 from flask_sqlalchemy import SQLAlchemy # Database ORM ^2
 from forms import RegistrationForm, LoginForm
+from pathlib import Path
+from zipfile import ZipFile
 
 
+#Uses requests to save zip file - thanks to
+# https://stackoverflow.com/questions/9419162/download-returned-zip-file-from-url
+#Chunk sz prevents loading entire file into mem & allows work to be done
+# concurrently with loading
+def download_url(url, save_path, chunk_size=128): #chunk_size in b
+    fileObj = requests.get(url, stream=True) #stream - restrict Py mem usage
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    with open(save_path, 'wb') as fileDownload: #Write in binary mode ("as is")
+        for chunk in fileObj.iter_content(chunk_size=chunk_size):
+            fileDownload.write(chunk)
+    with ZipFile(save_path, 'r') as zipObj:
+        zipObj.extract(save_path+'/WID_Data_Metadata/WID_Data_21012021-003057.c\
+            sv', save_path+'WID1.csv')
 #Shaves down & organizes fetched covid deaths/wk data
 #Returns tuple: (deaths/wk, deaths/wk by age, deaths/wk by sex)
 def orgze_DBW_AS(ogLst):
@@ -22,7 +38,7 @@ def orgze_DBW_AS(ogLst):
 
     for line in ogLst:
         #Remove irrelevant columns, editing ogLst
-        rmLst = ['data_as_of','state','mmwr_week']
+        rmLst = ['data_as_of','state']
         [line.pop(col) for col in rmLst]
         #Construct DBW_S only from rows of all ages in ogLst
         if line['age_group'] == 'All Ages':
@@ -175,10 +191,37 @@ def updates():
     return render_template("updates.html", title='SARSCoViz - Updates', posts=posts)
 
 
-#Use requests.get() to fetch data in json format from web, and use .json() to return as dict
-COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-wrfu.json?$limit=200000').json()
+#Use requests.get() to fetch data in json format from web, and use .json() to
+# return as dict
+
+COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-w\
+    rfu.json?$limit=200000').json()
 #Might use this API once it's fixed -the data's out of order in many ways
-'''COVID19CasesAndDeathsByDay = requests.get('https://data.cdc.gov/resource/9mfq-cb36.json?$limit=200000').json()'''
+'''COVID19CasesAndDeathsByDay = requests.get('https://data.cdc.gov/resource/9mf\
+    q-cb36.json?$limit=200000').json()'''
+
+#WIP - Wealth distribution
+'''download_url('https://wid.world/exports/WID_Data_Metadata_21012021-003057.zip',\
+    './WID/WID1/WID_Data_Metadata_21012021-003057.zip')'''
+
+headers = {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "keep-alive",
+    "Sec-Ch-Ua": "\"Chromium\";v=\"88\", \"Google Chrome\";v=\"88\", \";Not A Brand\";v=\"99\"",
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "none",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36"
+}
+Rgnl_IncomeProductEmployment_StateArea = requests.get('https://apps.bea.gov/api\
+    /data/?UserID=4ACE1088-72E5-4690-953A-6619CAE411B2&method=GetData&datasetna\
+        me=Regional&TableName=CAINC1&LineCode=1&Year=ALL&GeoFips=STATE&Result\
+            Format=json', headers=headers).json()
+
+print(Rgnl_IncomeProductEmployment_StateArea)
 
 #* - Implement bad request catch
 

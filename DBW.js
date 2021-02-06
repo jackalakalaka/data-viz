@@ -1,6 +1,7 @@
  
 const titleText = 'Deaths per week in the USA';
 const yAxisLabelText = '';
+const DBW_notice = 'Number of deaths reported in this table are the total number of deaths received and coded as of the date of analysis, and do not represent all deaths that occurred in that period. Data during this period are incomplete because of the lag in time between when the death occurred and when the death certificate is completed, submitted to NCHS and processed for reporting purposes. This delay can range from 1 week to 8 weeks or more.'
 
 // Selects first available svg (defd in HTML file)
 const svg = d3.select('#svg1');
