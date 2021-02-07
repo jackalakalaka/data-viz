@@ -1,20 +1,19 @@
 {% extends "layout.html" %}
 {% block content %}
       <div style='margin-top:0px;margin-bottom:0px;padding:0px;' >
-        <h1 style='font-size:38px'>COVID-19 deaths by week</h1>
+        <h1 style='font-size:38px'>COVID-19 deaths by week in the US</h1>
         <svg id="svg1" width="900" height="450"></svg>
         <!-- Loads to minified version of D3 -->
         <script src="https://d3js.org/d3.v5.min.js"></script>
         <!-- Link desired js file -->
-        <script src="/DBW.js"></script>
+        <script src="DBW.js"></script>
       </div>
-      <!-- * - Cutoff not an issue w/ div itself-->
-      <!--<div style='margin-top:0px;margin-bottom:0px;padding:0px;'>
-          <h1>COVID-19 cases by week</h1>
-          <svg id="svg2" width="900" height="450"></svg>-->
-          <!-- Loads to minified version of D3 -->
-          <!--<script src="https://d3js.org/d3.v5.min.js"></script>-->
-          <!-- Link desired js file -->
-          <!--<script src="/CBW.js"></script>
-      </div>-->
+      <div style='margin-top:0px;margin-bottom:0px;padding:0px;' >
+        <h1 style='font-size:38px'>Total Annual Personal Income in the US</h1>
+        <svg id="svg_PI_USD_e3" width="900" height="450"></svg>
+        <!-- Loads to minified version of D3 -->
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <!-- Link desired js file -->
+        <script src="PI_USD_e3.js"></script>
+      </div>
 {% endblock content %}

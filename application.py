@@ -7,12 +7,28 @@ at https://bit.ly/SarsCoViz_Docn
 - Feedback welcome!
 '''
 
-import copy, requests, csv, datetime
+import copy, requests, csv, datetime, os, json
 from flask import Flask, render_template, url_for, flash, request, redirect #^1
 from flask_sqlalchemy import SQLAlchemy # Database ORM ^2
 from forms import RegistrationForm, LoginForm
+from pathlib import Path
+from zipfile import ZipFile
 
 
+#Uses requests to save zip file - thanks to
+# https://stackoverflow.com/questions/9419162/download-returned-zip-file-from-url
+#Chunk sz prevents loading entire file into mem & allows work to be done
+# concurrently with loading
+def download_url(url, save_path, chunk_size=128): #chunk_size in b
+    fileObj = requests.get(url, stream=True) #stream - restrict Py mem usage
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    with open(save_path, 'wb') as fileDownload: #Write in binary mode ("as is")
+        for chunk in fileObj.iter_content(chunk_size=chunk_size):
+            fileDownload.write(chunk)
+    with ZipFile(save_path, 'r') as zipObj:
+        zipObj.extract(save_path+'/WID_Data_Metadata/WID_Data_21012021-003057.c\
+            sv', save_path+'WID1.csv')
 #Shaves down & organizes fetched covid deaths/wk data
 #Returns tuple: (deaths/wk, deaths/wk by age, deaths/wk by sex)
 def orgze_DBW_AS(ogLst):
@@ -22,7 +38,7 @@ def orgze_DBW_AS(ogLst):
 
     for line in ogLst:
         #Remove irrelevant columns, editing ogLst
-        rmLst = ['data_as_of','state','mmwr_week']
+        rmLst = ['data_as_of','state']
         [line.pop(col) for col in rmLst]
         #Construct DBW_S only from rows of all ages in ogLst
         if line['age_group'] == 'All Ages':
@@ -50,6 +66,27 @@ def orgze_DBW_AS(ogLst):
         ln3['wkNum'] = i3+1
 
     return (DBW, DBW_A, DBW_S)
+#Shaves down & organizes fetched Regional income/product/employment by state & area data
+#Returns tuple: (personal-income/yr)
+def orgze_RIPE_SA(ogDct):
+    #List of US annual personal income (1000s USD), containing a dict for each year
+    PI_USD_e3 = []
+
+    #Grab actual data.
+    #"BEAAPI" is a key next to some notes. "Results" is a lone key. "Data" is a list of data
+    #packets next to some metadata.
+    dataLst = ogDct["BEAAPI"]["Results"]["Data"]
+
+    i = 0
+    yrDict = {}
+    #Grab national data
+    while dataLst[i]["GeoName"] == "United States": #Append relevant data from each pkt to PI_USD_e3
+        yrDict["personal_income"] = dataLst[i]["DataValue"].replace(",","") #Rm commas
+        yrDict["year"] = dataLst[i]["TimePeriod"]
+        PI_USD_e3.append(copy.deepcopy(yrDict))
+        i += 1
+
+    return (PI_USD_e3) 
 #Converts list to csv file
 def listToCsv(lst,csvFilename):
     #Obtain list of lst's keys
@@ -139,12 +176,12 @@ posts = [
 @application.route("/")
 @application.route("/home") #another web addr option to same route
 def home():
-    return render_template("index.html", title='SARSCoViz - Plots')
+    return render_template("index.html", title='Data-viz - Plots')
 
 #About page
 @application.route("/about")
 def about():
-    return render_template("about.html", title='SARSCoViz - About')
+    return render_template("about.html", title='Data-viz - About')
 
 #Account registration page
 @application.route("/register", methods=['GET', 'POST']) #methods for user
@@ -172,19 +209,43 @@ def login():
 #Dummy page for showcasing posts dict. From tutorial
 @application.route("/updates", methods=['GET','POST'])
 def updates():
-    return render_template("updates.html", title='SARSCoViz - Updates', posts=posts)
+    return render_template("updates.html", title='Data-viz - Updates', posts=posts)
 
 
-#Use requests.get() to fetch data in json format from web, and use .json() to return as dict
-COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-wrfu.json?$limit=200000').json()
-#Might use this API once it's fixed -the data's out of order in many ways
-'''COVID19CasesAndDeathsByDay = requests.get('https://data.cdc.gov/resource/9mfq-cb36.json?$limit=200000').json()'''
+#Use requests.get() to fetch data in json format, using .json() method to return as dict
 
-#* - Implement bad request catch
-
+#COVID-19 deaths/wk by age, sex
+COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-w'
+    'rfu.json?$limit=200000').json()
 #Get deaths by wk data from organizer fn
 DBW_AS_lists = orgze_DBW_AS(COVID19DeathsByWeek_AgeSex) #(deaths/wk, deaths/wk by age, deaths/wk by sex)
 listToCsv(DBW_AS_lists[0],'DBW.csv') #Create csv file from DBW_AS_lists's deaths/wk data
+
+'''#Might use this API once it's fixed -the data's out of order in many ways
+COVID19CasesAndDeathsByDay = requests.get('https://data.cdc.gov/resource/9mf'
+    'q-cb36.json?$limit=200000').json()'''
+
+#WIP - Wealth distribution
+'''download_url('https://wid.world/exports/WID_Data_Metadata_21012021-003057.zip',
+    './WID/WID1/WID_Data_Metadata_21012021-003057.zip')'''
+
+#US personal-income/yr
+Rgnl_IncomeProductEmployment_StateArea = requests.get('https://apps.bea.gov/api'
+    '/data/?UserID=4ACE1088-72E5-4690-953A-6619CAE411B2&method=GetData&datasetna'
+        'me=Regional&TableName=CAINC1&LineCode=1&Year=ALL&GeoFips=STATE&Result'
+            'Format=json').json()
+RIPE_SA = orgze_RIPE_SA(Rgnl_IncomeProductEmployment_StateArea) #personal-income/yr
+listToCsv(RIPE_SA,'PI_USD_e3.csv') #Create csv file from personal-income/yr data
+
+"""#Debug - dump to json file
+with open('data.json', 'w') as outfile:
+    json.dump(Rgnl_IncomeProductEmployment_StateArea, outfile)"""
+
+
+
+#* - Implement bad request catch
+
+
 
 
 #Remove need to restart server for every change by running in debug mode

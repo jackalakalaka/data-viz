@@ -2,5 +2,10 @@
     "python.pythonPath": "C:\\Users\\jackalakalaka\\AppData\\Local\\Programs\\Python\\Python38\\python.exe",
     "cSpell.words": [
         "obj"
-    ]
+    ],
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#07351E",
+        "titleBar.activeBackground": "#0A4A2A",
+        "titleBar.activeForeground": "#F1FDF7"
+    }
 }
