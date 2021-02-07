@@ -1,7 +1,7 @@
  
 const titleText = 'Deaths per week in the USA';
 const yAxisLabelText = '';
-const DBW_notice = 'Number of deaths reported in this table are the total number of deaths received and coded as of the date of analysis, and do not represent all deaths that occurred in that period. Data during this period are incomplete because of the lag in time between when the death occurred and when the death certificate is completed, submitted to NCHS and processed for reporting purposes. This delay can range from 1 week to 8 weeks or more.'
+const DBW_notice = 'Number of deaths reported in this table are the total number of deaths received and coded as of the date of analysis. Data are incomplete because of the lag between (1) when the death occurred and (2) when the death certificate is completed, submitted to NCHS, and processed for reporting purposes. This delay can range from 1 week to 8 weeks or more.'
 
 // Selects first available svg (defd in HTML file)
 const svg = d3.select('#svg1');
@@ -104,12 +104,19 @@ const render = data => {
       .attr('y', d => yScale(yValue(d)));
       
   
-  //Adds title
+  //Add title
   g.append('text')
       .attr('class', 'title')
       .attr('x', 115)
       .attr('y', -30)
       .text(titleText);
+
+  /*//Add notice about incompleteness of recent data
+  g.append('text')
+  .attr('class', 'title')
+  .attr('x', 15)
+  .attr('y', 130)
+  .text(DBW_notice);*/
 };
 
 
@@ -126,6 +133,5 @@ d3.csv('/DBW.csv').then(data => { //Callback fn w/ data as arg
   });
   
   //Renders one row after another from data.csv
-  console.log(data.length);
   render(data);
 });

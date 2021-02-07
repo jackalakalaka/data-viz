@@ -7,7 +7,7 @@ at https://bit.ly/SarsCoViz_Docn
 - Feedback welcome!
 '''
 
-import copy, requests, csv, datetime, os
+import copy, requests, csv, datetime, os, json
 from flask import Flask, render_template, url_for, flash, request, redirect #^1
 from flask_sqlalchemy import SQLAlchemy # Database ORM ^2
 from forms import RegistrationForm, LoginForm
@@ -66,6 +66,27 @@ def orgze_DBW_AS(ogLst):
         ln3['wkNum'] = i3+1
 
     return (DBW, DBW_A, DBW_S)
+#Shaves down & organizes fetched Regional income/product/employment by state & area data
+#Returns tuple: (personal-income/yr)
+def orgze_RIPE_SA(ogDct):
+    #List of US annual personal income (1000s USD), containing a dict for each year
+    PI_USD_e3 = []
+
+    #Grab actual data.
+    #"BEAAPI" is a key next to some notes. "Results" is a lone key. "Data" is a list of data
+    #packets next to some metadata.
+    dataLst = ogDct["BEAAPI"]["Results"]["Data"]
+
+    i = 0
+    yrDict = {}
+    #Grab national data
+    while dataLst[i]["GeoName"] == "United States": #Append relevant data from each pkt to PI_USD_e3
+        yrDict["personal_income"] = dataLst[i]["DataValue"].replace(",","") #Rm commas
+        yrDict["year"] = dataLst[i]["TimePeriod"]
+        PI_USD_e3.append(copy.deepcopy(yrDict))
+        i += 1
+
+    return (PI_USD_e3) 
 #Converts list to csv file
 def listToCsv(lst,csvFilename):
     #Obtain list of lst's keys
@@ -155,12 +176,12 @@ posts = [
 @application.route("/")
 @application.route("/home") #another web addr option to same route
 def home():
-    return render_template("index.html", title='SARSCoViz - Plots')
+    return render_template("index.html", title='Data-viz - Plots')
 
 #About page
 @application.route("/about")
 def about():
-    return render_template("about.html", title='SARSCoViz - About')
+    return render_template("about.html", title='Data-viz - About')
 
 #Account registration page
 @application.route("/register", methods=['GET', 'POST']) #methods for user
@@ -188,46 +209,43 @@ def login():
 #Dummy page for showcasing posts dict. From tutorial
 @application.route("/updates", methods=['GET','POST'])
 def updates():
-    return render_template("updates.html", title='SARSCoViz - Updates', posts=posts)
+    return render_template("updates.html", title='Data-viz - Updates', posts=posts)
 
 
-#Use requests.get() to fetch data in json format from web, and use .json() to
-# return as dict
+#Use requests.get() to fetch data in json format, using .json() method to return as dict
 
-COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-w\
-    rfu.json?$limit=200000').json()
-#Might use this API once it's fixed -the data's out of order in many ways
-'''COVID19CasesAndDeathsByDay = requests.get('https://data.cdc.gov/resource/9mf\
-    q-cb36.json?$limit=200000').json()'''
-
-#WIP - Wealth distribution
-'''download_url('https://wid.world/exports/WID_Data_Metadata_21012021-003057.zip',\
-    './WID/WID1/WID_Data_Metadata_21012021-003057.zip')'''
-
-'''headers = {
-    "Accept": "*/*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Connection": "keep-alive",
-    "Sec-Ch-Ua": "\"Chromium\";v=\"88\", \"Google Chrome\";v=\"88\", \";Not A Brand\";v=\"99\"",
-    "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "none",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36"
-}'''
-Rgnl_IncomeProductEmployment_StateArea = requests.get('https://apps.bea.gov/api\
-    /data/?UserID=4ACE1088-72E5-4690-953A-6619CAE411B2&method=GetData&datasetna\
-        me=Regional&TableName=CAINC1&LineCode=1&Year=ALL&GeoFips=STATE&Result\
-            Format=json').json()
-
-print(Rgnl_IncomeProductEmployment_StateArea)
-
-#* - Implement bad request catch
-
+#COVID-19 deaths/wk by age, sex
+COVID19DeathsByWeek_AgeSex = requests.get('https://data.cdc.gov/resource/vsak-w'
+    'rfu.json?$limit=200000').json()
 #Get deaths by wk data from organizer fn
 DBW_AS_lists = orgze_DBW_AS(COVID19DeathsByWeek_AgeSex) #(deaths/wk, deaths/wk by age, deaths/wk by sex)
 listToCsv(DBW_AS_lists[0],'DBW.csv') #Create csv file from DBW_AS_lists's deaths/wk data
+
+'''#Might use this API once it's fixed -the data's out of order in many ways
+COVID19CasesAndDeathsByDay = requests.get('https://data.cdc.gov/resource/9mf'
+    'q-cb36.json?$limit=200000').json()'''
+
+#WIP - Wealth distribution
+'''download_url('https://wid.world/exports/WID_Data_Metadata_21012021-003057.zip',
+    './WID/WID1/WID_Data_Metadata_21012021-003057.zip')'''
+
+#US personal-income/yr
+Rgnl_IncomeProductEmployment_StateArea = requests.get('https://apps.bea.gov/api'
+    '/data/?UserID=4ACE1088-72E5-4690-953A-6619CAE411B2&method=GetData&datasetna'
+        'me=Regional&TableName=CAINC1&LineCode=1&Year=ALL&GeoFips=STATE&Result'
+            'Format=json').json()
+RIPE_SA = orgze_RIPE_SA(Rgnl_IncomeProductEmployment_StateArea) #personal-income/yr
+listToCsv(RIPE_SA,'PI_USD_e3.csv') #Create csv file from personal-income/yr data
+
+"""#Debug - dump to json file
+with open('data.json', 'w') as outfile:
+    json.dump(Rgnl_IncomeProductEmployment_StateArea, outfile)"""
+
+
+
+#* - Implement bad request catch
+
+
 
 
 #Remove need to restart server for every change by running in debug mode
