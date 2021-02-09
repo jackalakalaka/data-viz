@@ -6,3 +6,6 @@
 4. Enter '$env:FLASK_APP = "COVID-19_Info_Dashboard"', referencing the python app file.
 5. Enter '$env:FLASK_ENV = "development"'.
 6. Enter 'flask run' to run the app, whose address (your local machine's) is linked in the terminal's output and openable in a broswer.
+# Website - http://sarscoviz.info/about
+# Documentation - https://docs.google.com/document/d/18tSVw6OKgKA-u0gXlQuedB0uH_8QSgea5QybRSeVVsI/edit#
+# Discord - https://discord.gg/vXSnKv4xrW
