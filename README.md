@@ -8,6 +8,6 @@ Instructions for running the server:
 3. Run the app "application.py".
 ```
 
-# [Website](http://sarscoviz.info/about)(outdated)
+# [Website](http://sarscoviz.info/about) (outdated)
 # [Documentation](https://docs.google.com/document/d/18tSVw6OKgKA-u0gXlQuedB0uH_8QSgea5QybRSeVVsI/edit#)
 # [Discord](https://discord.gg/vXSnKv4xrW)
